@@ -1,8 +1,13 @@
 import { useState } from 'react'
 
-const randomIndex = () => {
-  const x = Math.random() * 8
-  return x
+const MostVotes = ({ votes , anecdotes }) => {
+  const i = votes.indexOf(Math.max(...votes))
+  return (
+    <div>
+      <p>{anecdotes[i]}</p>
+      <p>has {votes[i]} votes</p>
+    </div>
+  )
 }
 
 const App = () => {
@@ -18,8 +23,6 @@ const App = () => {
   ]
   const [selected, setSelected] = useState(0)
   const [votes, setVotes] = useState(new Array(anecdotes.length).fill(0))
-  console.log(votes)
-  
 
   const handleClick = () => {
     const x = Math.floor(Math.random() * 8)
@@ -34,10 +37,13 @@ const App = () => {
   
   return (
     <div>
+      <h2>Anecdote of the day</h2>
       <p>{anecdotes[selected]}</p>
       <p>has {votes[selected]} votes</p>
       <button onClick={handleVote}>vote</button>
       <button onClick={handleClick}>next ancedote</button>
+      <h2>Anecdote with most votes</h2>
+      <MostVotes votes={votes} anecdotes={anecdotes} /> 
     </div>
   )
 }
