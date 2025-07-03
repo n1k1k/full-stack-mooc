@@ -1,3 +1,3 @@
 # Puhelinluettelo
 
-Exercises 2.6- 
+Exercises 2.6-2.15
