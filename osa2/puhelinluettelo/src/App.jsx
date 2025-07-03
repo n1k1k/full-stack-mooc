@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import Persons from './components/Persons'
+import Person from './components/Person'
 import PersonForm from './components/PersonFrom'
 import personService from './services/persons'
 
@@ -41,6 +41,19 @@ const App = () => {
     }
   }
 
+  const deleteNameOf = (id) => {
+    const person = persons.find(p => p.id === id)
+    const conf = confirm(`Delete ${person.name}?`)
+    
+    if (conf){
+    personService
+      .deletePerson(id)
+      .then(returnedPerson => {
+        setPersons(persons.filter(p => p.id !== returnedPerson.id))
+      })
+    }
+  }
+
   const handleNameChange = (event) => {
     setNewName(event.target.value)
   }
@@ -60,7 +73,16 @@ const App = () => {
       <h3>Add new</h3>
       <PersonForm addName={addName} newName={newName} newNumber={newNumber} handleNameChange={handleNameChange} handleNumberChange={handleNumberChange}/>
       <h3>Numbers</h3>
-      <Persons persons={personsToShow} />
+      <ul>
+        {personsToShow.map(person => 
+          <Person
+            key={person.name}
+            name={person.name}
+            number={person.number}
+            deletePerson={() => deleteNameOf(person.id)}
+          />
+          )}
+      </ul>
     </div>
   )
 }
