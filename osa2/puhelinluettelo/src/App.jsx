@@ -12,7 +12,7 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter ] = useState('')
-  const [message, setMessage] = useState(null)
+  const [message, setMessage] = useState({content: null, type:null})
   const personsToShow = persons.filter(person => person.name.toLowerCase().includes(filter.toLowerCase()))
 
   useEffect(() => {
@@ -37,11 +37,19 @@ const App = () => {
             setPersons(persons.map(p => p.id !== person.id ? p : returnedPerson))
             setNewName('')
             setNewNumber('')
-            setMessage(`Updated number for ${newName}`)
+            setMessage({content:`Updated number for ${newName}`, type:'info'})
             setTimeout(() => {
-              setMessage(null)
+              setMessage({content: null, type:null})
             }, 5000)
           })
+          .catch(error => {
+            setMessage({content: `Information of ${person.name} has already been removed from server`, type:'error'})
+            setTimeout(() => {
+                  setMessage({content: null, type:null})
+                }, 5000)
+            setPersons(persons.filter(p => p.id !== person.id))
+            })
+          
 
       }
     } else {
@@ -56,9 +64,9 @@ const App = () => {
           setPersons(persons.concat(returnedPerson))
           setNewName('')
           setNewNumber('')
-          setMessage(`Added ${newName}`)
+          setMessage({content:`Added ${newName}`, type:"info"})
           setTimeout(() => {
-            setMessage(null)
+            setMessage({content: null, type:null})
           }, 5000)
         })
     }
@@ -73,10 +81,10 @@ const App = () => {
       .deletePerson(id)
       .then(returnedPerson => {
         setPersons(persons.filter(p => p.id !== returnedPerson.id))
-        setMessage(`Deleted ${returnedPerson.name}`)
-            setTimeout(() => {
-              setMessage(null)
-            }, 5000)
+        setMessage({content:`Deleted ${returnedPerson.name}`, type:'info' })
+        setTimeout(() => {
+          setMessage({content: null, type:null})
+        }, 5000)
       })
     }
   }
