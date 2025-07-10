@@ -29,6 +29,19 @@ app.get('/', (request, response) => {
     response.send('<h1>Puhelinluettelo</h1>')
 })
 
+
+app.get('/info', (request, response) => {
+    const date = new Date().toString()
+
+    const content = 
+            `<div>
+                <p>Phonebook has info for ${persons.length} people</p>
+                <p>${date}</p>
+            </div>`
+
+    response.send(content)
+})
+
 app.get('/api/persons', (request, response) => {
     response.json(persons)
 })
