@@ -80,8 +80,8 @@ const App = () => {
     personService
       .deletePerson(id)
       .then(returnedPerson => {
-        setPersons(persons.filter(p => p.id !== returnedPerson.id))
-        setMessage({content:`Deleted ${returnedPerson.name}`, type:'info' })
+        setPersons(persons.filter(p => p.id !== person.id))
+        setMessage({content:`Deleted ${person.name}`, type:'info' })
         setTimeout(() => {
           setMessage({content: null, type:null})
         }, 5000)

@@ -1,7 +1,9 @@
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
+const cors = require('cors')
 
+app.use(cors())
 app.use(express.json())
 
 morgan.token('body', (req) => {
@@ -11,7 +13,7 @@ morgan.token('body', (req) => {
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
 const getRandomId = (max) => {
-    return Math.floor(Math.random()* max)
+    return String(Math.floor(Math.random()* max))
 }
 
 let persons = [
