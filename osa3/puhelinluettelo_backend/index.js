@@ -17,8 +17,6 @@ const getRandomId = (max) => {
     return String(Math.floor(Math.random()* max))
 }
 
-let persons = []
-
 app.get('/', (request, response) => {
     response.send('<h1>Puhelinluettelo</h1>')
 })
@@ -58,35 +56,35 @@ app.delete('/api/persons/:id', (request, response) => {
 
 app.post('/api/persons', (request, response) => {
     const body = request.body
-    const unique = persons.find(person => person.name === body.name)
 
     if (!body.name) {
         return response.status(400).json({
             error: 'name is missing'
         })
-    } 
+    }
     
     if (!body.number) {
         return response.status(400).json({
             error: 'number is missing'
         })
     }
-
+    
+    
+    /*const unique = persons.find(person => person.name === body.name)
     if (unique) {
         return response.status(400).json({
             error: 'name must be unique'
         })
-    } 
+    }*/
 
-    const person = {
+    const person = new Person ({
         name: body.name,
         number: body.number,
-        id: getRandomId(10000)
-    }
+    })
 
-    persons = persons.concat(person)
-
-    response.json(person)
+    person.save().then(savedPerson => {
+        response.json(savedPerson)
+    })
 })
 
 const PORT = process.env.PORT
