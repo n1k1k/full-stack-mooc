@@ -13,6 +13,8 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "dotenv": "^17.2.0",
+    "env": "^0.0.2",
     "express": "^5.1.0",
     "mongoose": "^8.16.3",
     "morgan": "^1.10.0"
