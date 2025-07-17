@@ -27,12 +27,6 @@ app.use(express.static('dist'))
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = []
-
-const getRandomId = (max) => {
-    return String(Math.floor(Math.random()* max))
-}
-
 app.get('/', (request, response) => {
     response.send('<h1>Puhelinluettelo</h1>')
 })
@@ -40,13 +34,16 @@ app.get('/', (request, response) => {
 app.get('/info', (request, response) => {
     const date = new Date().toString()
 
-    const content = 
-            `<div>
-                <p>Phonebook has info for ${persons.length} people</p>
-                <p>${date}</p>
-            </div>`
-
-    response.send(content)
+    Person.countDocuments()
+        .then(count => {
+            const content = 
+                `<div>
+                    <p>Phonebook has info for ${count} people</p>
+                    <p>${date}</p>
+                </div>`
+            response.send(content)
+        })
+        .catch(error => next(error))
 })
 
 app.get('/api/persons', (request, response) => {
