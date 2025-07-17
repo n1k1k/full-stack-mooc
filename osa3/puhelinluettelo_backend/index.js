@@ -62,7 +62,6 @@ app.get('/api/persons/:id', (request, response, next) => {
         if (person) {
             response.json(person)
         } else {
-            console.log()
             response.status(404).end()
         }
     })
@@ -91,14 +90,6 @@ app.post('/api/persons', (request, response, next) => {
         error.name = 'BadRequest'
         throw error
     }
-    
-    
-    /*const unique = persons.find(person => person.name === body.name)
-    if (unique) {
-        return response.status(400).json({
-            error: 'name must be unique'
-        })
-    }*/
 
     const person = new Person ({
         name: body.name,
@@ -107,6 +98,26 @@ app.post('/api/persons', (request, response, next) => {
 
     person.save().then(savedPerson => {
         response.json(savedPerson)
+        })
+        .catch(error => next(error))
+})
+
+app.put('/api/persons/:id', (request, response, next) => {
+    const { name, number } = request.body
+    console.log(name, number)
+
+    Person.findById(request.params.id)
+        .then(person => {
+            if (!person) {
+                response.status(404).end()
+            }
+
+            person.name = name
+            person.number = number
+
+            return person.save().then((updatePerson) => {
+                response.json(updatePerson)
+            })
         })
         .catch(error => next(error))
 })
