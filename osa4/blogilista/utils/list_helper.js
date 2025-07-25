@@ -1,4 +1,3 @@
-const blog = require("../models/blog")
 
 const dummy = (blogs) => {
   return 1
@@ -26,8 +25,29 @@ const favouriteBlog = (blogs) => {
     : blogs.reduce(maxLikes, blogs[0])
 }
 
+const mostBlogs = (blogs) => {
+  const maxBlogs = (max, current) => {
+    return current[1] > max[1]
+      ? current
+      : max
+  }
+
+  const numberOfBlogs = blogs.reduce((counts, blog) => ({
+    ...counts,
+    [blog.author]: (counts[blog.author] || 0) + 1
+  }), {})
+
+  const result = Object.entries(numberOfBlogs).reduce(maxBlogs, ['', 0])
+
+  return blogs.length === 0
+    ? null
+    : { author: result[0], blogs: result[1] }
+}
+
+
 module.exports = {
   dummy,
   totalLikes,
-  favouriteBlog
+  favouriteBlog,
+  mostBlogs
 }
