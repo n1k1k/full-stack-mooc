@@ -2,7 +2,7 @@ const { test, describe } = require('node:test')
 const assert = require('node:assert')
 const listHelper = require('../utils/list_helper')
 
-describe('author with most blogs', () => {
+describe('author with most likes', () => {
   const listWithZeroBlogs = []
   const listWithOneBlog = [
     {
@@ -65,42 +65,18 @@ describe('author with most blogs', () => {
   }  
   ]
 
-  const listofBlogsWithEqualNumberOfAuthors = [
-    {
-    _id: "5a422bc61b54a676234d17fc",
-    title: "Type wars",
-    author: "Robert C. Martin",
-    url: "http://blog.cleancoder.com/uncle-bob/2016/05/01/TypeWars.html",
-    likes: 2,
-    __v: 0
-    },
-    {
-      _id: '5a422aa71b54a676234d17f8',
-      title: 'Go To Statement Considered Harmful',
-      author: 'Edsger W. Dijkstra',
-      url: 'http://www.u.arizona.edu/~rubinson/copyright_violations/Go_To_Considered_Harmful.html',
-      likes: 5,
-      __v: 0
-    }
-  ]
-
   test('of empty list is null', () => {
-    const result = listHelper.mostBlogs(listWithZeroBlogs)
+    const result = listHelper.mostLikes(listWithZeroBlogs)
     assert.strictEqual(result, null)
   })
 
   test('when list has only one blog equals that author', () => {
-    const result = listHelper.mostBlogs(listWithOneBlog)
-    assert.deepStrictEqual(result, { author: "Edsger W. Dijkstra", blogs: 1 })
+    const result = listHelper.mostLikes(listWithOneBlog)
+    assert.deepStrictEqual(result, { author: "Edsger W. Dijkstra", likes: 5 })
   })
 
   test('of a list with multiple author is calculated right', () => {
-    const result = listHelper.mostBlogs(listOfBlogs)
-    assert.deepStrictEqual(result, { author: "Robert C. Martin", blogs: 3 })
-  })
-
-  test('of a list with multiple authors with equal number of blogs returns one of them', () => {
-    const result = listHelper.mostBlogs(listofBlogsWithEqualNumberOfAuthors)
-    assert.deepStrictEqual(result, { author: "Robert C. Martin", blogs: 1 })
+    const result = listHelper.mostLikes(listOfBlogs)
+    assert.deepStrictEqual(result, { author: "Edsger W. Dijkstra", likes: 17})
   })
 })
