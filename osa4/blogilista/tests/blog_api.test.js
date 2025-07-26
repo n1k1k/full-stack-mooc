@@ -45,12 +45,10 @@ test('returned blogs do not have an _id field', async () => {
 
 test('a valid blog can be added', async () => {
   const newBlog = {
-    _id: "5a422b891b54a676234d17fa",
     title: "First class tests",
     author: "Robert C. Martin",
     url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
-    likes: 10,
-    __v: 0
+    likes: 10
   }
 
   await api
@@ -65,6 +63,59 @@ test('a valid blog can be added', async () => {
   const titles = blogsAtEnd.map(b => b.title)
   assert(titles.includes('First class tests'))
 })
+
+test('if value for likes is not give, defaul is 0', async () => {
+  const newBlog = {
+    title: "First class tests",
+    author: "Robert C. Martin",
+    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll"
+  }
+
+  const resultBlog = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+  
+  assert.strictEqual(resultBlog.body.hasOwnProperty('likes'), true)
+  assert.strictEqual(resultBlog.body.likes, 0)
+})
+
+test('a blog without title is not added', async () => {
+  const noTitleBlog = {
+    author: "Robert C. Martin",
+    url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll",
+    likes: 2
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(noTitleBlog)
+    .expect(400)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+
+test('a blog without url is not added', async () => {
+  const noUrlBlog = {
+    title: "First class tests",
+    author: "Robert C. Martin",
+    likes: 2
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(noUrlBlog)
+    .expect(400)
+
+  const blogsAtEnd = await helper.blogsInDb()
+
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+  
+  
 
 after(async () => {
   await mongoose.connection.close()
