@@ -13,9 +13,21 @@ const api = supertest(app)
 describe('when there is intially some blogs saved', () => {
   beforeEach(async () => {
     await Blog.deleteMany({})
-    await Blog.insertMany(helper.initialBlogs)
+    await User.deleteMany({})
+
+    const passwordHash = await bcrypt.hash('password', 10)
+    const user = new User({
+      username: 'root',
+      name: 'Root User',
+      passwordHash: passwordHash
+    })
+
+    const savedUser = await user.save()
+
+    const blogs = helper.initialBlogs.map(blog => ({ ...blog, user: savedUser._id }))
+    await Blog.insertMany(blogs)
   })
-  
+
   test('blogs are returned as json', async () => {
     await api
       .get('/api/blogs')
@@ -30,23 +42,23 @@ describe('when there is intially some blogs saved', () => {
   })
 
   test('returned blogs have an id field', async () => {
-    const response = await api.get('/api/blogs')  
-    
+    const response = await api.get('/api/blogs')
+
     response.body.forEach(blog => {
       assert.strictEqual(blog.hasOwnProperty('id'), true)
     })
   })
 
   test('returned blogs do not have an _id field', async () => {
-    const response = await api.get('/api/blogs')  
-    
+    const response = await api.get('/api/blogs')
+
     response.body.forEach(blog => {
       assert.strictEqual(blog.hasOwnProperty('_id'), false)
     })
   })
 
   describe('addition of a new blog', () => {
-    test('succeeds with valid data', async () => {
+    test('succeeds with valid data if user is authenticated', async () => {
       const newBlog = {
         title: "First class tests",
         author: "Robert C. Martin",
@@ -54,8 +66,17 @@ describe('when there is intially some blogs saved', () => {
         likes: 10
       }
 
+      const user = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        }, { 'Content-Type': 'application/json' })
+        .expect(200)
+
       await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${user.body.token}`)
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/)
@@ -74,12 +95,21 @@ describe('when there is intially some blogs saved', () => {
         url: "http://blog.cleancoder.com/uncle-bob/2017/05/05/TestDefinitions.htmll"
       }
 
+      const token = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        })
+        .expect(200)
+
       const resultBlog = await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${token.body.token}`)
         .send(newBlog)
         .expect(201)
         .expect('Content-Type', /application\/json/)
-      
+
       assert.strictEqual(resultBlog.body.hasOwnProperty('likes'), true)
       assert.strictEqual(resultBlog.body.likes, 0)
     })
@@ -91,8 +121,17 @@ describe('when there is intially some blogs saved', () => {
         likes: 2
       }
 
+      const token = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        })
+        .expect(200)
+
       await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${token.body.token}`)
         .send(noTitleBlog)
         .expect(400)
 
@@ -108,8 +147,17 @@ describe('when there is intially some blogs saved', () => {
         likes: 2
       }
 
+      const token = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        })
+        .expect(200)
+
       await api
         .post('/api/blogs')
+        .set('Authorization', `Bearer ${token.body.token}`)
         .send(noUrlBlog)
         .expect(400)
 
@@ -120,11 +168,21 @@ describe('when there is intially some blogs saved', () => {
   })
 
   describe('deletion of a blog', () => {
-    test('succeeds with statuscode 204 if id is valid', async () => {
+    test('succeeds with statuscode 204 if blog id is valid and user is authenticated', async () => {
       const blogsAtStart = await helper.blogsInDb()
       const blogToDelete = blogsAtStart[0]
 
-      await api.delete(`/api/blogs/${blogToDelete.id}`)
+      const token = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        })
+        .expect(200)
+
+      await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set('Authorization', `Bearer ${token.body.token}`)
         .expect(204)
 
       const blogsAtEnd = await helper.blogsInDb()
@@ -135,9 +193,33 @@ describe('when there is intially some blogs saved', () => {
       assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
     })
 
-    test('fails with statuscode 400 if id is not valid', async () => {
-      await api.delete(`/api/blogs/fakeID`)
+    test('fails with statuscode 400 if blog id is not valid', async () => {
+      const token = await api
+        .post('/api/login')
+        .send({
+          username: 'root',
+          password: 'password'
+        })
+        .expect(200)
+
+      await api
+        .delete(`/api/blogs/fakeID`)
+        .set('Authorization', `Bearer ${token.body.token}`)
         .expect(400)
+    
+
+      const blogsAtEnd = await helper.blogsInDb()
+
+      assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+    })
+
+    test('fails with statuscode 401 if user not authenticated', async () => {
+      const blogsAtStart = await helper.blogsInDb()
+      const blogToDelete = blogsAtStart[0]
+
+      await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .expect(401)
 
       const blogsAtEnd = await helper.blogsInDb()
 
@@ -257,7 +339,7 @@ describe('when there is initially one user in db', () => {
       await user.save()
     })
 
-    test.only('succeeds with a fresh username', async () => {
+    test('succeeds with a fresh username', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -274,13 +356,13 @@ describe('when there is initially one user in db', () => {
 
       const usersAtEnd = await helper.usersInDb()
       assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
-      
+
       const usernames = usersAtEnd.map(u => u.username)
       assert(usernames.includes(newUser.username))
     })
 
-    test.only('fails with status code 400 and message if username already taken', async () => {
-      const usersAtStart = await helper.usersInDb() 
+    test('fails with status code 400 and message if username already taken', async () => {
+      const usersAtStart = await helper.usersInDb()
 
       const newUser = {
         username: 'root',
@@ -295,12 +377,12 @@ describe('when there is initially one user in db', () => {
         .expect(response => {
           assert(response.body.error.includes('username must be unique'))
         })
-      
+
       const usersAtEnd = await helper.usersInDb()
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 
-    test.only('fails with status code 400 and message if username less than 3 characters', async () => {
+    test('fails with status code 400 and message if username less than 3 characters', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {
@@ -321,7 +403,7 @@ describe('when there is initially one user in db', () => {
       assert.strictEqual(usersAtEnd.length, usersAtStart.length)
     })
 
-    test.only('fails with status code 400 and message if password less than 3 characters', async () => {
+    test('fails with status code 400 and message if password less than 3 characters', async () => {
       const usersAtStart = await helper.usersInDb()
 
       const newUser = {

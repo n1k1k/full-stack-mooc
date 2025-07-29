@@ -12,7 +12,6 @@ blogsRouter.get('/', async (request, response) => {
 
 blogsRouter.post('/', userExtractor, async (request, response, next) => { 
   const body = request.body
-  const user = request.user
 
   if (!body.title) {
     return response.status(400).send({ error: 'Title is required' })
@@ -21,6 +20,8 @@ blogsRouter.post('/', userExtractor, async (request, response, next) => {
   if (!body.url) {
     return response.status(400).send({ error: 'URL is required' })
   }
+
+  const user = request.user
 
   const blog = new Blog({
     title: body.title,
