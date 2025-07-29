@@ -17,10 +17,10 @@ describe('when there is intially some blogs saved', () => {
   })
   
   test('blogs are returned as json', async () => {
-  await api
-    .get('/api/blogs')
-    .expect(200)
-    .expect('Content-Type', /application\/json/)
+    await api
+      .get('/api/blogs')
+      .expect(200)
+      .expect('Content-Type', /application\/json/)
   })
 
   test('all blogs are returned', async () => {
@@ -243,33 +243,104 @@ describe('when there is intially some blogs saved', () => {
 })
 
 describe('when there is initially one user in db', () => {
-  beforeEach(async () => {
-    await User.deleteMany({})
+  describe('addition of a new user', () => {
+    beforeEach(async () => {
+      await User.deleteMany({})
 
-    const passwordHash = await bcrypt.hash('testPassword', 10)
-    const user = new User({
-      username: 'root',
-      name: 'Root User',
-      passwordHash
+      const passwordHash = await bcrypt.hash('testPassword', 10)
+      const user = new User({
+        username: 'root',
+        name: 'Root User',
+        passwordHash: passwordHash
+      })
+
+      await user.save()
     })
 
-    await user.save()
-  })
+    test.only('succeeds with a fresh username', async () => {
+      const usersAtStart = await helper.usersInDb()
 
-  test.only('creation succeeds with a fresh username', async () => {
-    const usersAtStart = await helper.usersInDb()
+      const newUser = {
+        username: 'SpongeBob',
+        name: 'SpongeBob SquarePants',
+        password: 'BobPassword'
+      }
 
-    await api
-      .post('/api/users')
-      .send(helper.initialUsers[0])
-      .expect(201)
-      .expect('Content-Type', /application\/json/)
+      await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(201)
+        .expect('Content-Type', /application\/json/)
 
-    const usersAtEnd = await helper.usersInDb()
-    assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
-    
-    const usernames = usersAtEnd.map(u => u.username)
-    assert(usernames.includes(helper.initialUsers[0].username))
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length + 1)
+      
+      const usernames = usersAtEnd.map(u => u.username)
+      assert(usernames.includes(newUser.username))
+    })
+
+    test.only('fails with status code 400 and message if username already taken', async () => {
+      const usersAtStart = await helper.usersInDb() 
+
+      const newUser = {
+        username: 'root',
+        name: 'Root User',
+        password: 'newPassword'
+      }
+
+      await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect(response => {
+          assert(response.body.error.includes('username must be unique'))
+        })
+      
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
+
+    test.only('fails with status code 400 and message if username less than 3 characters', async () => {
+      const usersAtStart = await helper.usersInDb()
+
+      const newUser = {
+        username: 'ab',
+        name: 'Test Name',
+        password: 'validPassword'
+      }
+
+      await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect(response => {
+          assert(response.body.error.includes('username must be at least 3 characters long'))
+        })
+
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
+
+    test.only('fails with status code 400 and message if password less than 3 characters', async () => {
+      const usersAtStart = await helper.usersInDb()
+
+      const newUser = {
+        username: 'validUsername',
+        name: 'Test Name',
+        password: 'ab'
+      }
+
+      await api
+        .post('/api/users')
+        .send(newUser)
+        .expect(400)
+        .expect(response => {
+          assert(response.body.error.includes('password must be at least 3 characters long'))
+        })
+
+      const usersAtEnd = await helper.usersInDb()
+      assert.strictEqual(usersAtEnd.length, usersAtStart.length)
+    })
   })
 })
 
